@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Circuito Perfecto - Desafío del Círculo</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0a1a2e 0%, #0b2b3b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', 'Roboto', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: rgba(10, 25, 35, 0.6);
+            backdrop-filter: blur(2px);
+            border-radius: 3rem;
+            padding: 1.2rem;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.4);
+            max-width: 800px;
+            width: fit-content;
+            margin: auto;
+        }
+
+        .canvas-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .canvas-wrapper {
+            background: #1e2f3c;
+            border-radius: 2rem;
+            padding: 12px;
+            box-shadow: inset 0 0 12px rgba(0,0,0,0.5), 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: #fef9e8;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: crosshair;
+            touch-action: none;
+            width: 100%;
+            height: auto;
+        }
+
+        .info-panel {
+            margin-top: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: #071a24cc;
+            backdrop-filter: blur(8px);
+            border-radius: 60px;
+            padding: 0.6rem 1.5rem;
+            border: 1px solid #3a7ca5;
+        }
+
+        .score-area {
+            background: #010f17;
+            border-radius: 3rem;
+            padding: 0.3rem 1rem;
+            text-align: center;
+        }
+
+        .percentage {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #ffd966;
+            text-shadow: 0 0 6px #ffb347;
+        }
+
+        .percentage span {
+            font-size: 1rem;
+        }
+
+        .best-score {
+            font-size: 0.8rem;
+            color: #aaf0ff;
+            background: #0e2a34;
+            border-radius: 2rem;
+            padding: 0.2rem 0.8rem;
+            margin-top: 4px;
+        }
+
+        .message {
+            font-size: 0.95rem;
+            font-weight: 600;
+            background: #0e2a34;
+            padding: 0.4rem 1rem;
+            border-radius: 3rem;
+            color: #c0f2ff;
+        }
+
+        button {
+            background: #ffb347;
+            border: none;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 0.5rem 1.2rem;
+            border-radius: 3rem;
+            color: #1e2f2f;
+            cursor: pointer;
+            transition: 0.1s linear;
+            font-family: inherit;
+            box-shadow: 0 4px 0 #a05e15;
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #a05e15;
+        }
+
+        .settings {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            background: #00000055;
+            padding: 10px 18px;
+            border-radius: 60px;
+        }
+
+        .difficulty {
+            display: flex;
+            gap: 8px;
+            background: #0b1c24;
+            padding: 5px 12px;
+            border-radius: 40px;
+        }
+
+        .difficulty button {
+            background: #2c4b5c;
+            box-shadow: none;
+            color: white;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.9rem;
+            transform: none;
+        }
+
+        .difficulty button.active {
+            background: #ffb347;
+            color: #1e2f2f;
+            box-shadow: 0 2px 5px black;
+        }
+
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #0b1c24;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+
+        .color-picker label {
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        input[type="color"] {
+            width: 32px;
+            height: 32px;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        @media (max-width: 650px) {
+            .percentage { font-size: 1.6rem; }
+            .info-panel { padding: 0.5rem 1rem; }
+            .settings { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div class="game-container">
+        <div class="canvas-area">
+            <div class="canvas-wrapper">
+                <canvas id="circleCanvas" width="550" height="550" style="width:100%; max-width:550px; aspect-ratio:1/1"></canvas>
+            </div>
+            <div class="info-panel">
+                <div class="score-area">
+                    <div class="percentage" id="percentDisplay">0%</div>
+                    <div class="best-score" id="bestDisplay">🏆 Mejor: 0%</div>
+                </div>
+                <div class="message" id="statusMsg">✍️ Dibuja sin levantar</div>
+                <button id="resetBtn">⟳ Reiniciar</button>
+            </div>
+        </div>
+
+        <div class="settings">
+            <div class="difficulty" id="difficultyGroup">
+                <button data-diff="easy" class="active">🟢 Fácil</button>
+                <button data-diff="medium">🟡 Medio</button>
+                <button data-diff="hard">🔴 Difícil</button>
+            </div>
+            <div class="color-picker">
+                <label>🎨 Trazo:</label>
+                <input type="color" id="strokeColor" value="#3f8ec7">
+                <label>📄 Fondo:</label>
+                <input type="color" id="bgColor" value="#fef9e8">
+            </div>
+        </div>
+        <div class="instruction" style="text-align:center; font-size:0.7rem; margin-top:12px; color:#bbd4f0">
+            💡 Feedback en tiempo real: el anillo muestra la desviación del círculo ideal
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // Elementos
+        const canvas = document.getElementById('circleCanvas');
+        const ctx = canvas.getContext('2d');
+        const percentSpan = document.getElementById('percentDisplay');
+        const bestSpan = document.getElementById('bestDisplay');
+        const statusMsgDiv = document.getElementById('statusMsg');
+        const resetBtn = document.getElementById('resetBtn');
+        const strokeColorPicker = document.getElementById('strokeColor');
+        const bgColorPicker = document.getElementById('bgColor');
+        
+        // Dimensiones fijas
+        const W = 550, H = 550;
+        canvas.width = W;
+        canvas.height = H;
+        
+        // Estado del juego
+        let drawing = false;
+        let points = [];              // puntos actuales del trazo
+        let isCompleted = false;      // si ya se evaluó el trazo actual
+        let currentBest = 0;          // mejor porcentaje guardado
+        let difficulty = 'easy';       // 'easy', 'medium', 'hard'
+        
+        // Variables para feedback en tiempo real (cálculo de desviación durante el dibujo)
+        let feedbackTimeout = null;
+        
+        // Colores personalizables
+        let strokeColor = '#3f8ec7';
+        let bgColor = '#fef9e8';
+        
+        // ----- Cargar mejor puntuación desde localStorage -----
+        function loadBestScore() {
+            const saved = localStorage.getItem('circlePerfectBest');
+            if(saved && !isNaN(parseFloat(saved))) {
+                currentBest = parseFloat(saved);
+            } else {
+                currentBest = 0;
+            }
+            bestSpan.innerText = `🏆 Mejor: ${currentBest}%`;
+        }
+        
+        function saveBestScore(score) {
+            if(score > currentBest) {
+                currentBest = score;
+                localStorage.setItem('circlePerfectBest', currentBest);
+                bestSpan.innerText = `🏆 Mejor: ${currentBest}%`;
+            }
+        }
+        
+        // ----- Dibujar fondo y guías según dificultad -----
+        function drawBackgroundAndGuides() {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, W, H);
+            
+            // Guías según dificultad
+            if(difficulty !== 'hard') {
+                let alpha = (difficulty === 'easy') ? 0.35 : 0.18;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.beginPath();
+                ctx.arc(W/2, H/2, 190, 0, Math.PI*2);
+                if(difficulty === 'easy') {
+                    ctx.setLineDash([8, 12]);
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeStyle = '#4f8ec0';
+                    ctx.stroke();
+                } else {
+                    ctx.setLineDash([6, 15]);
+                    ctx.lineWidth = 1.8;
+                    ctx.strokeStyle = '#6c9ebf';
+                    ctx.stroke();
+                }
+                // circulo interior sutil
+                ctx.beginPath();
+                ctx.arc(W/2, H/2, 190, 0, Math.PI*2);
+                ctx.setLineDash([]);
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#aaccdd';
+                ctx.stroke();
+                ctx.restore();
+            } else {
+                // dificil: solo un punto central muy tenue
+                ctx.save();
+                ctx.globalAlpha = 0.2;
+                ctx.beginPath();
+                ctx.arc(W/2, H/2, 3, 0, 2*Math.PI);
+                ctx.fillStyle = '#ffaa55';
+                ctx.fill();
+                ctx.restore();
+            }
+            // punto central siempre visible suavemente
+            ctx.beginPath();
+            ctx.arc(W/2, H/2, 4, 0, 2*Math.PI);
+            ctx.fillStyle = '#ffaa66cc';
+            ctx.fill();
+        }
+        
+        // Redibujar trazo completo
+        function redrawFull() {
+            drawBackgroundAndGuides();
+            if(points.length === 0) return;
+            ctx.save();
+            ctx.beginPath();
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = strokeColor;
+            for(let i=0; i<points.length; i++) {
+                if(i===0) ctx.moveTo(points[i].x, points[i].y);
+                else ctx.lineTo(points[i].x, points[i].y);
+            }
+            ctx.stroke();
+            // punto inicial
+            if(points.length>0) {
+                ctx.beginPath();
+                ctx.fillStyle = '#2c7a47';
+                ctx.arc(points[0].x, points[0].y, 5, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(points[0].x, points[0].y, 2, 0, 2*Math.PI);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+        
+        // ----- FEEDBACK EN TIEMPO REAL: dibuja un anillo de "desviación" alrededor del punto actual -----
+        // calcula centroide parcial y radio medio de los puntos actuales, luego muestra desviación instantánea
+        function updateRealTimeFeedback(currentX, currentY) {
+            if(points.length < 8) return;
+            // Calculamos centroide con todos los puntos hasta ahora
+            let sumX=0, sumY=0;
+            for(let p of points) {
+                sumX += p.x;
+                sumY += p.y;
+            }
+            const cx = sumX / points.length;
+            const cy = sumY / points.length;
+            // calcular radios medios
+            let radii = points.map(p => Math.hypot(p.x-cx, p.y-cy));
+            let meanR = radii.reduce((a,b)=>a+b,0) / radii.length;
+            if(meanR < 15) return;
+            const idealRadius = meanR;
+            const currentRad = Math.hypot(currentX - cx, currentY - cy);
+            const deviation = Math.abs(currentRad - idealRadius) / idealRadius;
+            // Color de feedback: verde->amarillo->rojo (dev 0 a 0.4)
+            let intensity = Math.min(1, deviation / 0.35);
+            let r = 80 + Math.floor(175 * intensity);
+            let g = 200 - Math.floor(150 * intensity);
+            let b = 100 - Math.floor(80 * intensity);
+            let alpha = 0.45 + intensity * 0.3;
+            // Dibujar anillo alrededor del punto actual (solo feedback visual)
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.arc(currentX, currentY, 12 + 8*intensity, 0, 2*Math.PI);
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.5)`;
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(currentX, currentY, 6, 0, 2*Math.PI);
+            ctx.fillStyle = `rgba(255, 100, 70, 0.7)`;
+            ctx.fill();
+            ctx.restore();
+            // También podemos mostrar breve texto de desviación
+        }
+        
+        // ----- Evaluación de precisión (circularidad) mejorada, devuelve {percent, reason}-----
+        function evaluatePrecision(pointArray) {
+            if(pointArray.length < 25) return { percent: 0, reason: "Trazo demasiado corto" };
+            const n = pointArray.length;
+            let sumX=0, sumY=0;
+            for(let p of pointArray) { sumX+=p.x; sumY+=p.y; }
+            const cx = sumX/n, cy = sumY/n;
+            let radii = pointArray.map(p=>Math.hypot(p.x-cx, p.y-cy));
+            let meanR = radii.reduce((a,b)=>a+b,0)/n;
+            if(meanR < 20) return { percent: 5, reason: "Círculo muy pequeño, amplía el trazo" };
+            let sqSum=0;
+            for(let r of radii) sqSum += (r-meanR)**2;
+            let stdDev = Math.sqrt(sqSum/n);
+            let cv = stdDev / meanR;
+            let radialScore = Math.max(0, Math.min(1, 1 - cv * 1.25));
+            
+            // Cierre
+            const firstP = pointArray[0];
+            const lastP = pointArray[n-1];
+            const closureDist = Math.hypot(firstP.x-lastP.x, firstP.y-lastP.y);
+            let closureFactor = 1 - Math.min(0.8, closureDist/(meanR*0.7));
+            if(closureDist > meanR*0.55) closureFactor = 0.3;
+            
+            // Cobertura angular
+            let angles = pointArray.map(p=>Math.atan2(p.y-cy, p.x-cx));
+            let minAng=Infinity, maxAng=-Infinity;
+            for(let a of angles) { minAng=Math.min(minAng,a); maxAng=Math.max(maxAng,a); }
+            let span = maxAng - minAng;
+            if(span < Math.PI) {
+                let pos = angles.filter(a=>a>=0), neg = angles.filter(a=>a<0);
+                if(pos.length && neg.length) {
+                    let alt = (Math.max(...pos) - Math.min(...neg)) + 2*Math.PI;
+                    if(alt > span) span = alt;
+                }
+            }
+            let angularCoverage = Math.min(1, span / (2*Math.PI - 0.15));
+            if(angularCoverage < 0.55) angularCoverage = 0.4;
+            
+            let circularity = radialScore * 0.7 + closureFactor * 0.2 + angularCoverage * 0.1;
+            circularity = Math.min(1, Math.max(0, circularity));
+            let percent = Math.pow(circularity, 0.82) * 100;
+            percent = Math.min(99.99, Math.max(0, percent));
+            // Bonus por suavidad leve no necesario, pero ajuste
+            let reasonMsg = "";
+            if(percent >= 96) reasonMsg = "🎉 ¡RENDIMIENTO DIVINO! 100% virtual 🎉";
+            else if(percent >= 88) reasonMsg = "✨ ¡Excelente! rozando la perfección ✨";
+            else if(percent >= 76) reasonMsg = "👍 Muy buen círculo, muy redondo";
+            else if(percent >= 62) reasonMsg = "🟢 Buen intento, mejora la simetría";
+            else if(percent >= 45) reasonMsg = "⚠️ Practica más, trazo inestable";
+            else reasonMsg = "🔁 Intenta hacer un solo círculo cerrado y uniforme";
+            if(closureDist > meanR*0.45 && percent<85) reasonMsg = "🔁 Cierra mejor el círculo (vuelve cerca del inicio)";
+            return { percent: Math.floor(percent * 100) / 100, reason: reasonMsg };
+        }
+        
+        async function finalizeAndEvaluate() {
+            if(isCompleted) return;
+            if(points.length < 20) {
+                statusMsgDiv.innerHTML = "✏️ Recorrido demasiado corto, dibuja un círculo completo";
+                percentSpan.innerText = "0%";
+                isCompleted = true;
+                return;
+            }
+            const evaluation = evaluatePrecision(points);
+            let finalPercent = evaluation.percent;
+            percentSpan.innerText = `${finalPercent}%`;
+            statusMsgDiv.innerHTML = evaluation.reason;
+            if(finalPercent > currentBest) saveBestScore(finalPercent);
+            // Mostrar efecto visual del círculo perfecto estimado
+            drawBackgroundAndGuides();
+            redrawFull();
+            ctx.save();
+            ctx.globalAlpha = 0.2;
+            let sumX=0,sumY=0;
+            for(let p of points){ sumX+=p.x; sumY+=p.y; }
+            let cx=sumX/points.length, cy=sumY/points.length;
+            let radii = points.map(p=>Math.hypot(p.x-cx, p.y-cy));
+            let meanR = radii.reduce((a,b)=>a+b,0)/radii.length;
+            ctx.beginPath();
+            ctx.arc(cx, cy, meanR, 0, 2*Math.PI);
+            ctx.fillStyle = '#5fdc9a';
+            ctx.fill();
+            ctx.restore();
+            redrawFull();
+            isCompleted = true;
+        }
+        
+        // ----- RESET completo -----
+        function resetGame() {
+            drawing = false;
+            points = [];
+            isCompleted = false;
+            drawBackgroundAndGuides();
+            percentSpan.innerText = "0%";
+            statusMsgDiv.innerHTML = "✨ Nuevo círculo! Dibuja sin levantar ✨";
+        }
+        
+        // ----- Manejadores de eventos para dibujo (mouse/touch) -----
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX, clientY;
+            if(e.touches) {
+                if(e.touches.length===0) return null;
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            let canvasX = (clientX - rect.left) * scaleX;
+            let canvasY = (clientY - rect.top) * scaleY;
+            canvasX = Math.min(Math.max(0, canvasX), W);
+            canvasY = Math.min(Math.max(0, canvasY), H);
+            return { x: canvasX, y: canvasY };
+        }
+        
+        function onStart(e) {
+            e.preventDefault();
+            if(isCompleted) return;
+            drawing = true;
+            const coord = getCanvasCoords(e);
+            if(!coord) return;
+            if(points.length > 0 && !isCompleted) {
+                // si se empieza nuevo trazo sin reset, reiniciamos
+                points = [];
+                drawBackgroundAndGuides();
+            }
+            points.push({ x: coord.x, y: coord.y });
+            redrawFull();
+            statusMsgDiv.innerHTML = "🎨 Dibujando... suelta para evaluar";
+        }
+        
+        function onMove(e) {
+            e.preventDefault();
+            if(!drawing || isCompleted) return;
+            const coord = getCanvasCoords(e);
+            if(!coord) return;
+            if(points.length > 0) {
+                const last = points[points.length-1];
+                if(Math.hypot(last.x-coord.x, last.y-coord.y) < 3) return;
+            }
+            points.push({ x: coord.x, y: coord.y });
+            redrawFull();
+            // Feedback en tiempo real con el último punto
+            updateRealTimeFeedback(coord.x, coord.y);
+            if(feedbackTimeout) clearTimeout(feedbackTimeout);
+            feedbackTimeout = setTimeout(() => {
+                if(!drawing) return;
+                redrawFull(); // limpiar anillos después de un momento
+            }, 80);
+        }
+        
+        function onEnd(e) {
+            e.preventDefault();
+            if(!drawing) return;
+            drawing = false;
+            if(feedbackTimeout) clearTimeout(feedbackTimeout);
+            redrawFull(); // limpiar feedback
+            if(isCompleted) return;
+            if(points.length > 12) {
+                finalizeAndEvaluate();
+            } else {
+                if(points.length > 0) statusMsgDiv.innerHTML = "⭕ Trazo demasiado pequeño, haz un círculo más grande";
+                percentSpan.innerText = "0%";
+                isCompleted = true;
+            }
+        }
+        
+        function onCancel(e) {
+            e.preventDefault();
+            if(drawing) {
+                drawing = false;
+                if(!isCompleted && points.length>8) finalizeAndEvaluate();
+                else resetGame();
+            }
+        }
+        
+        // ---- Dificultad UI ----
+        function setDifficulty(level) {
+            difficulty = level;
+            document.querySelectorAll('#difficultyGroup button').forEach(btn => {
+                if(btn.dataset.diff === level) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            resetGame();
+        }
+        
+        // ---- Colores ----
+        function updateColors() {
+            strokeColor = strokeColorPicker.value;
+            bgColor = bgColorPicker.value;
+            drawBackgroundAndGuides();
+            if(points.length) redrawFull();
+            else drawBackgroundAndGuides();
+        }
+        
+        // ---- Eventos y carga inicial ----
+        function attachEvents() {
+            canvas.addEventListener('mousedown', onStart);
+            window.addEventListener('mousemove', (e) => { if(drawing) onMove(e); });
+            window.addEventListener('mouseup', onEnd);
+            canvas.addEventListener('touchstart', onStart, {passive: false});
+            canvas.addEventListener('touchmove', onMove, {passive: false});
+            canvas.addEventListener('touchend', onEnd);
+            canvas.addEventListener('touchcancel', onCancel);
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            resetBtn.addEventListener('click', resetGame);
+            strokeColorPicker.addEventListener('input', updateColors);
+            bgColorPicker.addEventListener('input', updateColors);
+            document.querySelectorAll('#difficultyGroup button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    setDifficulty(btn.dataset.diff);
+                });
+            });
+        }
+        
+        function init() {
+            loadBestScore();
+            attachEvents();
+            setDifficulty('easy');
+            updateColors();
+        }
+        
+        init();
+    })();
+</script>
+</body>
+</html>
